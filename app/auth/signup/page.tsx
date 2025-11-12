@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { createClientSupabase } from "@/lib/supabase"
@@ -56,7 +55,6 @@ export default function SignupPage() {
       }
 
       if (data?.user) {
-        // Update user profile
         const { error: updateError } = await supabase
           .from("user_profiles")
           .update({
@@ -79,15 +77,54 @@ export default function SignupPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
-        <div className="rounded-lg border bg-card p-8 space-y-6">
-          <div className="space-y-2 text-center">
-            <h1 className="text-2xl font-bold">Create Account</h1>
-            <p className="text-sm text-muted-foreground">Sign up for PharmaSafe</p>
+        <div className="mb-8 text-center">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-primary mb-4">
+            <svg className="w-6 h-6 text-primary-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 12l2 2 4-4m7 0a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
           </div>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Create Account</h1>
+          <p className="text-muted-foreground">Join PharmaSafe today</p>
+        </div>
 
+        <div className="rounded-lg border bg-card p-8 space-y-6 shadow-sm">
           <form onSubmit={handleSignUp} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="fullName" className="text-sm font-medium">
+                  Full Name
+                </Label>
+                <Input
+                  id="fullName"
+                  placeholder="John Doe"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="h-10"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="pharmacyName" className="text-sm font-medium">
+                  Pharmacy
+                </Label>
+                <Input
+                  id="pharmacyName"
+                  placeholder="John's Pharmacy"
+                  value={pharmacyName}
+                  onChange={(e) => setPharmacyName(e.target.value)}
+                  className="h-10"
+                />
+              </div>
+            </div>
+
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-sm font-medium">
+                Email Address
+              </Label>
               <Input
                 id="email"
                 type="email"
@@ -95,66 +132,62 @@ export default function SignupPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                className="h-10"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name</Label>
-              <Input
-                id="fullName"
-                placeholder="John Doe"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-sm font-medium">
+                  Password
+                </Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="h-10"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword" className="text-sm font-medium">
+                  Confirm
+                </Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="••••••••"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  className="h-10"
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="pharmacyName">Pharmacy Name</Label>
-              <Input
-                id="pharmacyName"
-                placeholder="John's Pharmacy"
-                value={pharmacyName}
-                onChange={(e) => setPharmacyName(e.target.value)}
-              />
-            </div>
+            {error && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="••••••••"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-              />
-            </div>
-
-            {error && <p className="text-sm text-destructive">{error}</p>}
-
-            <Button type="submit" disabled={loading} className="w-full">
-              {loading ? "Creating account..." : "Sign Up"}
+            <Button type="submit" disabled={loading} className="w-full h-10 font-medium">
+              {loading ? "Creating account..." : "Create Account"}
             </Button>
           </form>
 
-          <div className="text-center text-sm">
-            <span className="text-muted-foreground">Already have an account? </span>
-            <Link href="/auth/login" className="text-primary hover:underline font-medium">
-              Sign in
-            </Link>
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-border"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-card text-muted-foreground">Already have an account?</span>
+            </div>
           </div>
+
+          <Link href="/auth/login" className="block">
+            <Button variant="outline" className="w-full h-10 bg-transparent">
+              Sign In
+            </Button>
+          </Link>
         </div>
       </div>
     </div>
