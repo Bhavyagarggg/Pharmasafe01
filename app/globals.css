@@ -1,0 +1,171 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Pharmacy brand theme: primary blue, green, amber, and neutral slate */
+  --background: #eaf5eb; /* pale mint surface */
+  --foreground: #1b5e20; /* deep green text */
+  --card: #ffffff; /* white cards for contrast on light */
+  --card-foreground: #1b5e20;
+  --popover: #ffffff;
+  --popover-foreground: #1b5e20;
+  --primary: #2e7d32; /* brand green */
+  --primary-foreground: #ffffff;
+  --secondary: #66bb6a; /* lighter green accent */
+  --secondary-foreground: #0e2615;
+  --muted: #ddefe1; /* soft mint */
+  --muted-foreground: #2a6a32;
+  --accent: #a5d6a7; /* mint accent for subtle UI */
+  --accent-foreground: #0e2615;
+  --destructive: #c62828; /* error red */
+  --destructive-foreground: #ffffff;
+  --border: #cfe7d2; /* gentle green border */
+  --input: #cfe7d2;
+  --ring: #2e7d32; /* focus ring in brand green */
+  /* Charts follow brand hues with subtle variants */
+  --chart-1: #2e7d32; /* bar/line main */
+  --chart-2: #66bb6a; /* secondary series */
+  --chart-3: #a5d6a7; /* tints */
+  --chart-4: #81c784;
+  --chart-5: #1b5e20;
+  --radius: 0.625rem;
+  /* Sidebar */
+  --sidebar: #e4f1e6; /* slate-100 */
+  --sidebar-foreground: #1b5e20; /* slate-900 */
+  --sidebar-primary: #2e7d32;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #ddefe1; /* slate-200 */
+  --sidebar-accent-foreground: #1b5e20;
+  --sidebar-border: #cfe7d2;
+  --sidebar-ring: #2e7d32;
+}
+
+.dark {
+  /* Dark mode variants tuned for contrast and readability */
+  --background: #0f1714; /* very dark green-black */
+  --foreground: #c8e6c9; /* minty near-white */
+  --card: #121d18; /* slightly raised from bg */
+  --card-foreground: #c8e6c9;
+  --popover: #121d18;
+  --popover-foreground: #c8e6c9;
+  --primary: #66bb6a; /* brighter in dark */
+  --primary-foreground: #0b1e10;
+  --secondary: #2e7d32;
+  --secondary-foreground: #e6f6ea;
+  --muted: #18231e;
+  --muted-foreground: #a0c6a5;
+  --accent: #81c784;
+  --accent-foreground: #0b1e10;
+  --destructive: #ef5350;
+  --destructive-foreground: #0f1714;
+  --border: #223129; /* subtle green-gray border */
+  --input: #223129;
+  --ring: #66bb6a; /* brighter ring for dark */
+  /* Chart tints for dark surfaces */
+  --chart-1: #9be7a1; /* light mint bar */
+  --chart-2: #66bb6a; /* line/secondary */
+  --chart-3: #81c784;
+  --chart-4: #a5d6a7;
+  --chart-5: #2e7d32;
+  /* Dark-only chart readability tokens (bars, axes, tooltip) */
+  --chart-bar-dark: #9be7a1;
+  --chart-bar-hover-dark: #a5d6a7;
+  --chart-axes-dark: #7aa889;
+  --chart-tooltip-bg-dark: #1a2a23;
+  /* Sidebar (dark) */
+  --sidebar: #0f1714; /* slate-900 */
+  --sidebar-foreground: #c8e6c9;
+  --sidebar-primary: #66bb6a; /* slightly brighter for active items */
+  --sidebar-primary-foreground: #0b1e10;
+  --sidebar-accent: #121d18; /* gray-800 */
+  --sidebar-accent-foreground: #c8e6c9;
+  --sidebar-border: #223129;
+  --sidebar-ring: #66bb6a;
+}
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  /* Bars: solid, no borders, higher contrast on dark */
+  :root .recharts-bar-rectangle path {
+    fill: var(--chart-1) !important;
+    stroke: none !important;
+  }
+  :root .recharts-bar-rectangle:hover path {
+    fill: var(--chart-2) !important;
+  }
+  :root .recharts-cartesian-grid line {
+    stroke: #b9d6c0 !important; /* soft gridlines */
+  }
+  :root .recharts-cartesian-axis-tick-value {
+    fill: #2a6a32 !important; /* readable green text */
+  }
+  :root .recharts-default-tooltip {
+    background-color: #ffffff !important;
+    border-color: var(--border) !important;
+    color: var(--foreground) !important;
+  }
+
+  /* Axes and gridlines for better legibility on dark */
+  .dark .recharts-cartesian-grid line {
+    stroke: var(--chart-axes-dark) !important;
+  }
+  .dark .recharts-cartesian-axis-tick-value {
+    fill: var(--chart-axes-dark) !important;
+  }
+
+  /* Tooltip with deep green background and readable text */
+  .dark .recharts-default-tooltip {
+    background-color: var(--chart-tooltip-bg-dark) !important;
+    border-color: var(--chart-tooltip-bg-dark) !important;
+    color: var(--foreground) !important;
+  }
+}
