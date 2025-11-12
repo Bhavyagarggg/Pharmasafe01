@@ -1,27 +1,98 @@
+import { createClientServerSupabase } from "@/lib/supabase-server"
 import { NextResponse } from "next/server"
 
 export async function GET() {
-  const kpis = { total: 710, expiringSoon: 58, expired: 12, safe: 640 }
-  const distribution = [
-    { month: "Jul", count: 10 },
-    { month: "Aug", count: 14 },
-    { month: "Sep", count: 9 },
-    { month: "Oct", count: 16 },
-    { month: "Nov", count: 12 },
-    { month: "Dec", count: 8 },
-  ]
-  const forecast = [
-    { date: "2025-07", wastage: 5 },
-    { date: "2025-08", wastage: 7 },
-    { date: "2025-09", wastage: 6 },
-    { date: "2025-10", wastage: 8 },
-    { date: "2025-11", wastage: 6 },
-    { date: "2025-12", wastage: 5 },
-  ]
-  const recentAlerts = [
-    { id: "a1", severity: "amber", title: "Batch PAR-555 expiring", message: "Expires in 28 days" },
-    { id: "a2", severity: "red", title: "Batch IBU-101 expired", message: "Remove from stock" },
-    { id: "a3", severity: "green", title: "No refrigerator faults", message: "Last 7 days" },
-  ]
-  return NextResponse.json({ kpis, distribution, forecast, recentAlerts })
+  try {
+    const supabase = await createClientServerSupabase()
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const { data: medicines, error } = await supabase.from("medicines").select("*").eq("user_id", session.user.id)
+
+    if (error) {
+      console.error("[v0] Medicines fetch error:", error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    const now = new Date()
+    const kpis = {
+      total: medicines?.length || 0,
+      expiringSoon:
+        medicines?.filter((m) => {
+          const expiry = new Date(m.expiry_date)
+          const daysUntilExpiry = Math.floor((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+          return daysUntilExpiry <= 30 && daysUntilExpiry > 0
+        }).length || 0,
+      expired: medicines?.filter((m) => new Date(m.expiry_date) < now).length || 0,
+      safe: 0,
+    }
+
+    kpis.safe = kpis.total - kpis.expiringSoon - kpis.expired
+
+    // Group medicines by month for distribution
+    const distribution = groupByMonth(medicines || [])
+
+    // Simple wastage forecast (based on expiring medicines per month)
+    const forecast = generateForecast(medicines || [])
+
+    // Generate recent alerts
+    const { data: alerts } = await supabase
+      .from("alerts")
+      .select("*")
+      .eq("user_id", session.user.id)
+      .order("created_at", { ascending: false })
+      .limit(5)
+
+    return NextResponse.json({
+      kpis,
+      distribution,
+      forecast,
+      recentAlerts: alerts || [],
+    })
+  } catch (error: any) {
+    console.error("[v0] Expiry GET error:", error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+}
+
+function groupByMonth(medicines: any[]) {
+  const monthMap: Record<string, number> = {}
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+  medicines.forEach((m) => {
+    const date = new Date(m.expiry_date)
+    const month = months[date.getMonth()]
+    monthMap[month] = (monthMap[month] || 0) + 1
+  })
+
+  return months.map((month) => ({ month, count: monthMap[month] || 0 }))
+}
+
+function generateForecast(medicines: any[]) {
+  const now = new Date()
+  const forecast = []
+
+  for (let i = 0; i < 6; i++) {
+    const date = new Date(now.getFullYear(), now.getMonth() + i, 1)
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, "0")
+    const dateStr = `${year}-${month}`
+
+    const wastageCount = medicines.filter((m) => {
+      const expiry = new Date(m.expiry_date)
+      return expiry.getMonth() === date.getMonth() && expiry.getFullYear() === year
+    }).length
+
+    forecast.push({
+      date: dateStr,
+      wastage: Math.max(1, Math.floor(wastageCount * 0.3)),
+    })
+  }
+
+  return forecast
 }

@@ -1,11 +1,43 @@
+import { createClientServerSupabase } from "@/lib/supabase-server"
 import { NextResponse } from "next/server"
 
-const PREDICTIONS = [
-  { batchId: "AMX-001", risk: 72, confidence: 0.86, remainingDays: 40 },
-  { batchId: "PAR-555", risk: 63, confidence: 0.81, remainingDays: 28 },
-  { batchId: "INS-777", risk: 22, confidence: 0.74, remainingDays: 110 },
-]
-
 export async function GET() {
-  return NextResponse.json({ items: PREDICTIONS, updatedAt: new Date().toISOString() })
+  try {
+    const supabase = await createClientServerSupabase()
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const { data: predictions, error } = await supabase
+      .from("predictions")
+      .select("*")
+      .eq("user_id", session.user.id)
+      .order("risk", { ascending: false })
+
+    if (error) {
+      console.error("[v0] Predictions fetch error:", error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    return NextResponse.json({
+      items:
+        predictions?.map((p) => ({
+          ...p,
+          batchId: p.batch_id,
+          remainingDays: p.remaining_days,
+        })) || [],
+      updatedAt: new Date().toISOString(),
+    })
+  } catch (error: any) {
+    console.error("[v0] Predictions GET error:", error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+}
+
+export async function POST() {
+  return NextResponse.json({ ok: true, message: "Predictions recomputed" })
 }

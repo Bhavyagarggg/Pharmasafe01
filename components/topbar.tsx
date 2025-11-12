@@ -1,7 +1,5 @@
 "use client"
 
-import type React from "react"
-
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Sidebar } from "@/components/sidebar"
@@ -17,29 +15,31 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
+import { createClientSupabase } from "@/lib/supabase"
 
 type User = { name: string; email: string }
 
 export function Topbar() {
   const [open, setOpen] = useState(false)
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const supabase = createClientSupabase()
 
   useEffect(() => {
-    const raw = typeof window !== "undefined" ? localStorage.getItem("pharmasafe:user") : null
-    if (raw) {
-      try {
-        setUser(JSON.parse(raw))
-      } catch {
-        setUser(null)
-      }
+    async function getUser() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      setUser(user)
+      setLoading(false)
     }
-  }, [])
+    getUser()
+  }, [supabase])
 
-  function handleLogout() {
-    localStorage.removeItem("pharmasafe:user")
+  async function handleSignOut() {
+    await supabase.auth.signOut()
     setUser(null)
+    window.location.href = "/auth/login"
   }
 
   return (
@@ -78,101 +78,31 @@ export function Topbar() {
 
       <div className="flex items-center gap-2">
         <ThemeToggle />
-        {user ? (
+        {!loading && user ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="secondary" size="sm" aria-label="Open profile menu">
-                {user.name}
+                {user.email?.split("@")[0]}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Signed in</DropdownMenuLabel>
+              <DropdownMenuLabel>Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <a href="mailto:{user.email}">{user.email}</a>
+                <Link href="/profile">Profile Settings</Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout}>Sign out</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleSignOut}>Sign out</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        ) : (
-          <AuthDialog onAuth={(u) => setUser(u)} />
-        )}
+        ) : !loading ? (
+          <Link href="/auth/login">
+            <Button size="sm" variant="default">
+              Login
+            </Button>
+          </Link>
+        ) : null}
       </div>
     </div>
-  )
-}
-
-function AuthDialog({ onAuth }: { onAuth: (u: User) => void }) {
-  const [open, setOpen] = useState(false)
-  const [mode, setMode] = useState<"login" | "signup">("signup")
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState<string | null>(null)
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setError(null)
-
-    // basic validation
-    if (mode === "signup" && !name.trim()) return setError("Name is required")
-    if (!email.includes("@")) return setError("Valid email is required")
-    if (password.length < 6) return setError("Password must be at least 6 characters")
-
-    const u = { name: mode === "signup" ? name.trim() : email.split("@")[0], email: email.trim() }
-    localStorage.setItem("pharmasafe:user", JSON.stringify(u))
-    onAuth(u)
-    setOpen(false)
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm" variant="default" aria-haspopup="dialog">
-          Login / Sign Up
-        </Button>
-      </DialogTrigger>
-      <DialogContent aria-describedby={undefined}>
-        <DialogHeader>
-          <DialogTitle>{mode === "signup" ? "Create your account" : "Welcome back"}</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-3">
-          {mode === "signup" && (
-            <div className="space-y-1">
-              <Label htmlFor="name">Name</Label>
-              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Jane Doe" />
-            </div>
-          )}
-          <div className="space-y-1">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="jane@example.com"
-            />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-            />
-          </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
-          <div className="flex items-center justify-between">
-            <Button type="submit">{mode === "signup" ? "Sign up" : "Login"}</Button>
-            <Button type="button" variant="ghost" onClick={() => setMode(mode === "signup" ? "login" : "signup")}>
-              {mode === "signup" ? "Have an account? Login" : "New here? Sign up"}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
   )
 }

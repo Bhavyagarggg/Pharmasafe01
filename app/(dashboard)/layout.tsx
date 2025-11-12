@@ -1,8 +1,28 @@
+"use client"
+
 import type { ReactNode } from "react"
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Sidebar } from "@/components/sidebar"
 import { Topbar } from "@/components/topbar"
+import { createClientSupabase } from "@/lib/supabase"
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
+  const router = useRouter()
+  const supabase = createClientSupabase()
+
+  useEffect(() => {
+    async function checkAuth() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) {
+        router.push("/auth/login")
+      }
+    }
+    checkAuth()
+  }, [supabase, router])
+
   return (
     <div className="min-h-dvh flex bg-background text-foreground">
       <aside className="hidden md:flex w-64 border-r bg-sidebar text-sidebar-foreground">
