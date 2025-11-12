@@ -5,10 +5,10 @@ export async function GET(req: Request) {
   try {
     const supabase = await createClientServerSupabase()
     const {
-      data: { session },
-    } = await supabase.auth.getSession()
+      data: { user },
+    } = await supabase.auth.getUser()
 
-    if (!session?.user) {
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -16,7 +16,7 @@ export async function GET(req: Request) {
     const range = url.searchParams.get("range") || "weekly"
     const format = url.searchParams.get("format")
 
-    const { data: medicines, error } = await supabase.from("medicines").select("*").eq("user_id", session.user.id)
+    const { data: medicines, error } = await supabase.from("medicines").select("*").eq("user_id", user.id)
 
     if (error) {
       console.error("[v0] Reports fetch error:", error)

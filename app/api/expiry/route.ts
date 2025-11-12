@@ -5,14 +5,14 @@ export async function GET() {
   try {
     const supabase = await createClientServerSupabase()
     const {
-      data: { session },
-    } = await supabase.auth.getSession()
+      data: { user },
+    } = await supabase.auth.getUser()
 
-    if (!session?.user) {
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { data: medicines, error } = await supabase.from("medicines").select("*").eq("user_id", session.user.id)
+    const { data: medicines, error } = await supabase.from("medicines").select("*").eq("user_id", user.id)
 
     if (error) {
       console.error("[v0] Medicines fetch error:", error)
@@ -44,7 +44,7 @@ export async function GET() {
     const { data: alerts } = await supabase
       .from("alerts")
       .select("*")
-      .eq("user_id", session.user.id)
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(5)
 

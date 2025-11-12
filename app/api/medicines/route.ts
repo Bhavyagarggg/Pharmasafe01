@@ -5,17 +5,17 @@ export async function GET() {
   try {
     const supabase = await createClientServerSupabase()
     const {
-      data: { session },
-    } = await supabase.auth.getSession()
+      data: { user },
+    } = await supabase.auth.getUser()
 
-    if (!session?.user) {
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const { data: medicines, error } = await supabase
       .from("medicines")
       .select("*")
-      .eq("user_id", session.user.id)
+      .eq("user_id", user.id)
       .order("expiry_date", { ascending: true })
 
     if (error) {
@@ -42,10 +42,10 @@ export async function POST(req: Request) {
   try {
     const supabase = await createClientServerSupabase()
     const {
-      data: { session },
-    } = await supabase.auth.getSession()
+      data: { user },
+    } = await supabase.auth.getUser()
 
-    if (!session?.user) {
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -70,7 +70,7 @@ export async function POST(req: Request) {
         expiry_date: body.expiryDate,
         quantity: body.quantity,
         storage: body.storage,
-        user_id: session.user.id,
+        user_id: user.id,
       })
       .select()
 

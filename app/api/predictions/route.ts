@@ -5,17 +5,17 @@ export async function GET() {
   try {
     const supabase = await createClientServerSupabase()
     const {
-      data: { session },
-    } = await supabase.auth.getSession()
+      data: { user },
+    } = await supabase.auth.getUser()
 
-    if (!session?.user) {
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const { data: predictions, error } = await supabase
       .from("predictions")
       .select("*")
-      .eq("user_id", session.user.id)
+      .eq("user_id", user.id)
       .order("risk", { ascending: false })
 
     if (error) {

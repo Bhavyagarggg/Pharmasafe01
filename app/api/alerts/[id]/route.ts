@@ -6,10 +6,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const { id } = await params
     const supabase = await createClientServerSupabase()
     const {
-      data: { session },
-    } = await supabase.auth.getSession()
+      data: { user },
+    } = await supabase.auth.getUser()
 
-    if (!session?.user) {
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -19,7 +19,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       .from("alerts")
       .update({ dismissed: body.dismissed ?? true })
       .eq("id", id)
-      .eq("user_id", session.user.id)
+      .eq("user_id", user.id)
 
     if (error) {
       console.error("[v0] Alert update error:", error)
