@@ -5,7 +5,6 @@ import Link from "next/link"
 import { Sidebar } from "@/components/sidebar"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import {
   DropdownMenu,
@@ -44,7 +43,7 @@ export function Topbar() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
-      <div className="flex items-center gap-2 min-w-0 flex-1">
+      <div className="flex items-center gap-2 min-w-0">
         {/* Mobile menu */}
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
@@ -66,14 +65,6 @@ export function Topbar() {
         <Link href="/" className="md:hidden shrink-0 text-sm font-semibold text-foreground">
           PharmaSafe {"💊"}
         </Link>
-
-        {/* Search (hide on very small) */}
-        <div className="hidden sm:block flex-1">
-          <label htmlFor="global-search" className="sr-only">
-            Search
-          </label>
-          <Input id="global-search" placeholder="Search medicines or batches..." className="w-full" />
-        </div>
       </div>
 
       <div className="flex items-center gap-2">

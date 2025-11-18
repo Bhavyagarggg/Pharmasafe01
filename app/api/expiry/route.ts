@@ -34,6 +34,62 @@ export async function GET() {
 
     kpis.safe = kpis.total - kpis.expiringSoon - kpis.expired
 
+    const totals = medicines?.reduce(
+      (acc: any, m: any) => {
+        const expiry = new Date(m.expiry_date)
+        const daysUntilExpiry = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+        acc.totalQuantity += m.quantity || 0
+        acc.storage[m.storage as "Cold" | "Room"] = (acc.storage[m.storage as "Cold" | "Room"] || 0) + 1
+
+        const severity =
+          daysUntilExpiry <= 0 ? "critical" : daysUntilExpiry <= 30 ? "high" : daysUntilExpiry <= 90 ? "moderate" : "low"
+        acc.severity[severity] = (acc.severity[severity] || 0) + 1
+
+        if (severity === "critical" || severity === "high") {
+          acc.atRiskQuantity += m.quantity || 0
+        }
+
+        if (daysUntilExpiry >= 0) {
+          acc.upcoming.push({
+            name: m.name,
+            batchId: m.batch_id,
+            expiryDate: m.expiry_date,
+            daysRemaining: daysUntilExpiry,
+            quantity: m.quantity,
+            storage: m.storage,
+          })
+        }
+
+        return acc
+      },
+      {
+        totalQuantity: 0,
+        atRiskQuantity: 0,
+        storage: { Cold: 0, Room: 0 },
+        severity: { critical: 0, high: 0, moderate: 0, low: 0 },
+        upcoming: [] as any[],
+      }
+    ) || {
+      totalQuantity: 0,
+      atRiskQuantity: 0,
+      storage: { Cold: 0, Room: 0 },
+      severity: { critical: 0, high: 0, moderate: 0, low: 0 },
+      upcoming: [],
+    }
+
+    const topExpiring = totals.upcoming.sort((a, b) => a.daysRemaining - b.daysRemaining).slice(0, 5)
+
+    const inventoryHealth = {
+      safePercent: kpis.total ? Math.max(0, Math.round((kpis.safe / kpis.total) * 100)) : 0,
+      riskPercent:
+        kpis.total ? Math.min(100, Math.round(((kpis.expiringSoon + kpis.expired) / kpis.total) * 100)) : 0,
+      totalQuantity: totals.totalQuantity,
+      atRiskQuantity: totals.atRiskQuantity,
+      score: kpis.total
+        ? Math.max(0, Math.min(100, Math.round((kpis.safe / (kpis.total || 1)) * 100 - kpis.expiringSoon)))
+        : 0,
+    }
+
     // Group medicines by month for distribution
     const distribution = groupByMonth(medicines || [])
 
@@ -53,6 +109,10 @@ export async function GET() {
       distribution,
       forecast,
       recentAlerts: alerts || [],
+      storage: totals.storage,
+      severity: totals.severity,
+      inventoryHealth,
+      topExpiring,
     })
   } catch (error: any) {
     console.error("[v0] Expiry GET error:", error)

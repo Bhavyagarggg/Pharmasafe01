@@ -16,6 +16,7 @@ export async function GET() {
       .from("predictions")
       .select("*")
       .eq("user_id", user.id)
+      .order("predicted_at", { ascending: false })
       .order("risk", { ascending: false })
 
     if (error) {
@@ -23,13 +24,18 @@ export async function GET() {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
+    const items =
+      predictions?.map((p) => ({
+        id: p.id,
+        batchId: p.batch_id,
+        risk: p.risk,
+        confidence: p.confidence,
+        remainingDays: p.remaining_days,
+        predictedAt: p.predicted_at,
+      })) || []
+
     return NextResponse.json({
-      items:
-        predictions?.map((p) => ({
-          ...p,
-          batchId: p.batch_id,
-          remainingDays: p.remaining_days,
-        })) || [],
+      items,
       updatedAt: new Date().toISOString(),
     })
   } catch (error: any) {
